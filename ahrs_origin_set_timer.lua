@@ -4,6 +4,22 @@ local hdop_threshold = 80
 local hdop_below_threshold_time = 0 
 local threshold_time_max = 1000
 
+local gps_sensor = gps:primary_sensor()
+
+
+function get_gps_data(instance)
+    local data = {
+        hdop = gps:get_hdop(instance),
+        satellites = gps:num_sats(instance),
+        location = gps:location(instance),
+        status = gps:status(instance),
+    }
+    if data.status < gps.GPS_OK_FIX_3D then
+        return nil -- don't bother with invalid data
+    end
+    return data
+end
+
 function update()
 
     -- wait for AHRS to be initialised
@@ -12,15 +28,14 @@ function update()
         return update, 5000
     end
 
-    local location = ahrs:get_location()
-    local gps_hdop = gps:get_hdop(gps:primary_sensor())
+    gps_data = get_gps_data(gps_sensor)
 
-    if gps_hdop == nil then
+    if gps_data == nil then
         hdop_below_threshold_time = 0 
         return update, 100
     end
 
-    if gps_hdop < hdop_threshold then
+    if gps_data.hdop < hdop_threshold then
         hdop_below_threshold_time = hdop_below_threshold_time + 100
     else
         hdop_below_threshold_time = 0
@@ -28,8 +43,8 @@ function update()
     end
 
     if hdop_below_threshold_time >= threshold_time_max then
-        if not ahrs:get_origin() and location then
-                ahrs:set_origin(location)
+        if gps_data then
+                ahrs:set_origin(gps_data.location)
         end
 
         -- Reset timer
