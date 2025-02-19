@@ -11,7 +11,6 @@ local sum_location = {
     lng = 0
 } 
 
-
 function get_gps_data(instance)
     local data = {
         hdop = gps:get_hdop(instance),
@@ -25,7 +24,14 @@ function get_gps_data(instance)
     return data
 end
 
+function reset_state()
+    hdop_below_threshold_time = 0
+    sum_location.lat = 0
+    sum_location.lng = 0
+end
+
 function update()
+    sum_location = sum_location or {lat = 0, lng = 0}
 
     -- wait for AHRS to be initialised
     -- Might not be needed, included for startup, i.e incase rebooted underwater
@@ -36,7 +42,7 @@ function update()
     gps_data = get_gps_data(gps_sensor)
 
     if gps_data == nil then
-        hdop_below_threshold_time = 0 
+        reset_state()
         return update, loop_delay
     end
 
@@ -45,9 +51,7 @@ function update()
         sum_location.lat = sum_location.lat + gps_data.location.lat
         sum_location.lng = sum_location.lng + gps_data.location.lng
     else
-        hdop_below_threshold_time = 0
-        sum_location.lat = 0
-        sum_location.lng = 0
+        reset_state()
         return update, loop_delay
     end
 
@@ -57,6 +61,7 @@ function update()
             local average_lng = sum_location.lng / (threshold_time_max / loop_delay)
 
             local ahrs_location = ahrs:get_origin()
+        
             ahrs_location.lat = average_lat
             ahrs_location.lng = average_lng
 
@@ -66,12 +71,8 @@ function update()
 
         -- Reset timer
         -- If origin set, will wait 'threshold_time_max' till setting again
-        hdop_below_threshold_time = 0
-
-        sum_location.lat = 0
-        sum_location.lng = 0
+        reset_state()
     end
-    
 
     return update, loop_delay
 end
