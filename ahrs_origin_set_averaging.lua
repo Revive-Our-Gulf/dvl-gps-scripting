@@ -27,7 +27,7 @@ end
 function update()
 
     -- wait for AHRS to be initialised
-    -- Might not be needed, including for startup, i.e incase rebooted underwater
+    -- Might not be needed, included for startup, i.e incase rebooted underwater
     if not ahrs:initialised() then
         return update, 5000
     end
@@ -52,7 +52,12 @@ function update()
         if gps_data then
             local average_lat = sum_location.lat / 10
             local average_lng = sum_location.lng / 10
-            ahrs:set_origin(gps_data.location)
+
+            local ahrs_location = ahrs:get_origin()
+            ahrs_location.lat = average_lat
+            ahrs_location.lng = average_lng
+
+            ahrs:set_origin(ahrs_location)
             gcs:send_text(6, string.format("AHRS origin has been set by Script to lat: %.6f, lng: %.6f", average_lat, average_lng))
         end
 
