@@ -3,6 +3,7 @@
 local hdop_threshold = 80
 local hdop_below_threshold_time = 0 
 local threshold_time_max = 1000
+local loop_delay = 100 -- Ensure threshold_time_max / loop_delay is int
 
 local gps_sensor = gps:primary_sensor()
 local sum_location = {
@@ -36,7 +37,7 @@ function update()
 
     if gps_data == nil then
         hdop_below_threshold_time = 0 
-        return update, 100
+        return update, loop_delay
     end
 
     if gps_data.hdop < hdop_threshold then
@@ -47,13 +48,13 @@ function update()
         hdop_below_threshold_time = 0
         sum_location.lat = 0
         sum_location.lng = 0
-        return update, 100
+        return update, loop_delay
     end
 
     if hdop_below_threshold_time >= threshold_time_max then
         if gps_data then
-            local average_lat = sum_location.lat / 10
-            local average_lng = sum_location.lng / 10
+            local average_lat = sum_location.lat / (threshold_time_max / loop_delay)
+            local average_lng = sum_location.lng / (threshold_time_max / loop_delay)
 
             local ahrs_location = ahrs:get_origin()
             ahrs_location.lat = average_lat
@@ -72,7 +73,7 @@ function update()
     end
     
 
-    return update, 100
+    return update, loop_delay
 end
 
 return update()
