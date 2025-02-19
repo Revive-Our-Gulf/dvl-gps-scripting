@@ -45,6 +45,8 @@ function update()
         sum_location.lng = sum_location.lng + gps_data.location.lng
     else
         hdop_below_threshold_time = 0
+        sum_location.lat = 0
+        sum_location.lng = 0
         return update, 100
     end
 
@@ -64,6 +66,9 @@ function update()
         -- Reset timer
         -- If origin set, will wait 'threshold_time_max' till setting again
         hdop_below_threshold_time = 0
+
+        sum_location.lat = 0
+        sum_location.lng = 0
     end
     
 
