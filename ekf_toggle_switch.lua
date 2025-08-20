@@ -93,26 +93,27 @@
         end
 
         if ahrs:get_posvelyaw_source_set() ~= wanted_source then
+            if wanted_source == 0 then
+                gcs:send_text(6, string.format("Switched to DVL, HAccuracy: %.2f, HDOP: %.2f", gps_data.haccuracy, gps_data.hdop))
+            else
+                gcs:send_text(6, string.format("Switched to GPS, HAccuracy: %.2f, HDOP: %.2f", gps_data.haccuracy, gps_data.hdop))
+            end
             ahrs:set_posvelyaw_source_set(wanted_source)
         end
 
         gcs:send_named_float('EkfSource', ahrs:get_posvelyaw_source_set())
-
-        if gps_data.hdop and gps_data.haccuracy and gps_data.status and gps_data.sats then
-            gcs:send_text(6, string.format("WS: %d, HDOP: %.2f, HAccuracy: %.2f", wanted_source, gps_data.hdop, gps_data.haccuracy))
-        else
-            if not gps_data.hdop then
-                gcs:send_text(6, "Error: Unable to retrieve GPS HDOP")
-            end
-            if not gps_data.haccuracy then
-                gcs:send_text(6, "Error: Unable to retrieve GPS Horizontal Accuracy")
-            end
-            if not gps_data.status then
-                gcs:send_text(6, "Error: Unable to retrieve GPS Status")
-            end
-            if not gps_data.sats then
-                gcs:send_text(6, "Error: Unable to retrieve GPS Satellites")
-            end
+        
+        if not gps_data.hdop then
+            gcs:send_text(6, "Error: Unable to retrieve GPS HDOP")
+        end
+        if not gps_data.haccuracy then
+            gcs:send_text(6, "Error: Unable to retrieve GPS Horizontal Accuracy")
+        end
+        if not gps_data.status then
+            gcs:send_text(6, "Error: Unable to retrieve GPS Status")
+        end
+        if not gps_data.sats then
+            gcs:send_text(6, "Error: Unable to retrieve GPS Satellites")
         end
 
         return update, 200
